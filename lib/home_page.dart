@@ -3,7 +3,6 @@ import 'package:todo_app_project/todo/todo_item.dart';
 import 'package:todo_app_project/widgets/category_buttons.dart';
 
 import 'widgets/appbar.dart';
-import 'widgets/custom_button.dart';
 import 'widgets/date.dart';
 import 'todo/data_model.dart';
 import 'todo/database_helper.dart';
@@ -95,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
               const SizedBox(height: 10,),
-              SingleChildScrollView(
+              const SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: CategoryButtons()),
               const SizedBox(height: 50,),
