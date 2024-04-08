@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app_project/home_page.dart';
 
-import 'home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,10 +14,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(100, 5, 25, 60)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(100, 5, 25, 60)),
         useMaterial3: true,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }

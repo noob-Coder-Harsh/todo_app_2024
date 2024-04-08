@@ -6,7 +6,7 @@ class DateWidget extends StatelessWidget{
   @override
   Widget build(BuildContext context){
     DateTime currentDate = DateTime.now();
-    String formattedDate = "${currentDate.month}-${currentDate.month}-${currentDate.year}";
+    String formattedDate = "${currentDate.day}-${currentDate.month}-${currentDate.year}";
 
     return Center(
       child: Text(
@@ -14,7 +14,7 @@ class DateWidget extends StatelessWidget{
         style: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Colors.white.withOpacity(0.75)
+          color: Colors.white.withOpacity(0.90)
         ),
       ),
     );
