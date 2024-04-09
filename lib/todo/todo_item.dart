@@ -48,7 +48,7 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
         final SharedPreferences prefs = snapshot.data!;
         final bool done = prefs.getBool('todo_${widget.todo.id}') ?? false;
         return Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Card(
             color: Colors.white.withOpacity(0.6),
             child: Row(
@@ -63,7 +63,7 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
                   onChanged: _setDone,
                 ),
                 const SizedBox(width: 6),
-                Text(widget.todo.text,style: TextStyle(color: Colors.white.withOpacity(0.75),
+                Text(widget.todo.title,style: TextStyle(color: Colors.white.withOpacity(0.75),
                     fontSize: 20),),
               ],
             ),

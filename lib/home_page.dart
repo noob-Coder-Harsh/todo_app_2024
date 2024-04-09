@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:todo_app_project/todo/todo_description_page.dart';
 import 'package:todo_app_project/todo/todo_item.dart';
 import 'package:todo_app_project/widgets/category_buttons.dart';
-
+import 'package:todo_app_project/widgets/image_input.dart';
 import 'widgets/appbar.dart';
 import 'widgets/date.dart';
 import 'todo/data_model.dart';
@@ -26,11 +29,56 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (context) {
         TextEditingController textController = TextEditingController();
+        TextEditingController descriptionController = TextEditingController();
+        File? selectedImage; // Track selected image
+        DateTime selectedDate = DateTime.now();
+
         return AlertDialog(
           title: const Text('Add Todo'),
-          content: TextField(
-            controller: textController,
-            decoration: const InputDecoration(hintText: 'Enter your todo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: textController,
+                  decoration: const InputDecoration(hintText: 'Enter your todo'),
+                ),
+                SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(hintText: 'Enter description (optional)'),
+                ),
+                SizedBox(height: 8),
+                ImageInput(
+                  onPickImage: (image) {
+                    selectedImage = image;
+                  },
+                ),
+                SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () async {
+                    final DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2101),
+                    );
+                    if (pickedDate != null && pickedDate != selectedDate)
+                      setState(() {
+                        selectedDate = pickedDate;
+                      });
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_month),
+                      SizedBox(width: 5,),
+                      Text('Completion Date'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -43,9 +91,13 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
                   await _databaseHelper.insertTodo(Todo(
-                    id: 0, // This will be ignored by SQLite
-                    text: textController.text,
+                    id: '', // This will be ignored by SQLite
+                    title: textController.text,
+                    description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
+                    createdDate: DateTime.now(),
+                    targetCompletionDate: selectedDate,
                     done: false,
+                    imagePath: selectedImage != null ? selectedImage!.path : null, // Save image path if available
                   ));
                   _refreshTodos();
                   Navigator.of(context).pop();
@@ -58,6 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +172,56 @@ class _MyHomePageState extends State<MyHomePage> {
                       itemCount: todos.length,
                       itemBuilder: (context, index) {
                         final todo = todos[index];
-                        return CheckableTodoItem(
-                          todo: todo,
-                          onChanged: _refreshTodos,
+                        return Dismissible(
+                          key: Key(todo.id), // Unique key for each todo item
+                          background: Container(
+                            margin: const EdgeInsets.all(8),
+                            alignment: Alignment.centerRight,
+                            color: Colors.red.withOpacity(0.75),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          direction: DismissDirection.endToStart,
+                          confirmDismiss: (direction) async {
+                            // Confirmation dialog to ensure the user wants to delete
+                            return await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Confirm"),
+                                  content: const Text("Are you sure you want to delete this todo?"),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: Text("CANCEL"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: Text("DELETE"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          onDismissed: (direction) {
+                            // Remove the item from the data source
+                            // Here you can call a function to delete the todo from the database
+                            _databaseHelper.deleteTodo(todo.id);
+                          },
+                          child: InkWell(
+                            onTap: () {Navigator.push(context, MaterialPageRoute(
+                                  builder: (context) => TodoDescriptionPage(todo: todo),
+                                ),
+                              );
+                            },
+                            child: CheckableTodoItem(
+                              todo: todo,
+                              onChanged: _refreshTodos,
+                            ),
+                          ),
                         );
                       },
                     );
