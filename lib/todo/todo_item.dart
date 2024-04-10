@@ -59,7 +59,7 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
                   activeColor: Colors.green,
                   splashRadius: 16.0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  value: done,
+                  value: done, // Use done property
                   onChanged: _setDone,
                 ),
                 const SizedBox(width: 6),
