@@ -15,9 +15,6 @@ class TodoDescriptionPage extends StatefulWidget {
 class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
   late TextEditingController _descriptionController;
   late FocusNode _descriptionFocusNode;
-  String searchText = '';
-  bool _isSearching = false;
-
 
   @override
   void initState() {
@@ -33,56 +30,23 @@ class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
     super.dispose();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.shade800,
-        title: Row(
-          children: [
-            if(!_isSearching)
-            Text(widget.todo.title,style: TextStyle(color: Colors.white.withOpacity(0.75)),),
-            Spacer(), // Add spacer to push search icon to the right
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching; // Toggle search state
-                  if (!_isSearching) {
-                    searchText = ''; // Clear search text when exiting search mode
-                  }
-                });
-              },
-              icon: Icon(Icons.search),
-              color: Colors.white.withOpacity(0.6),
-            ),
-            if (_isSearching)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: TextField(
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.all(8.0),
-                    ),
-
-                  ),
-                ),
-              ),
-          ],
+        title: Text(
+          widget.todo.title,
+          style: TextStyle(color: Colors.white.withOpacity(0.75)),
         ),
       ),
       body: GestureDetector(
         onTap: () {
-          _descriptionFocusNode.unfocus(); // Dismiss keyboard when tapping outside TextField
+          _descriptionFocusNode.unfocus();
         },
         child: SingleChildScrollView(
           child: Container(
+            height: 730,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -125,11 +89,10 @@ class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
                     focusNode: _descriptionFocusNode,
                     style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
                     decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
                       hintText: 'No description available',
                       hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
                     ),
+                    expands: false,
                   ),
                 ),
                 const SizedBox(height: 20),

@@ -1,21 +1,23 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
 
-class DateWidget extends StatelessWidget{
-  const DateWidget({super.key});
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:text_3d/text_3d.dart';
+
+class DateWidget extends StatelessWidget {
+  const DateWidget({Key? key});
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     DateTime currentDate = DateTime.now();
-    String formattedDate = "${currentDate.day}-${currentDate.month}-${currentDate.year}";
+    String formattedDate = DateFormat('d, MMMM yyyy').format(currentDate);
 
     return Center(
-      child: Text(
-        formattedDate,
-        style: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: Colors.white.withOpacity(0.90)
-        ),
+      child: ThreeDText(
+        text: formattedDate,
+        textStyle: TextStyle(fontSize: 32, color: Colors.white.withOpacity(0.75),fontWeight: FontWeight.bold),
+        depth: 5,
+        style: ThreeDStyle.inset,
       ),
     );
   }
