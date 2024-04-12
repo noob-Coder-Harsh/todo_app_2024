@@ -1,13 +1,13 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:todo_app_project/todo/todo_description_page.dart';
-import 'package:todo_app_project/widgets/custom_button.dart';
-import 'package:todo_app_project/widgets/image_input.dart';
-import 'widgets/date.dart';
-import 'todo/data_model.dart';
-import 'todo/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:todo_app_project/todo/todo_description_page.dart';
+import 'package:todo_app_project/todo/todo_item.dart';
+import 'package:todo_app_project/widgets/image_input.dart';
+import 'data_model.dart';
+import 'database_helper.dart';
+import 'widgets/date.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -17,13 +17,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
   final _databaseHelper = DatabaseHelper();
   bool _isSearching = false;
   String _sortBy = 'None';
-  String _filterBy = 'All'; // Initialize filter to 'All'
   String _searchText = '';
   late Future<SharedPreferences> _prefsFuture;
-  bool _showArchivedTodos = false; // Add this line in your state class
+  bool _showArchivedTodos = false;
 
   @override
   void initState() {
@@ -44,33 +44,34 @@ class _MyHomePageState extends State<MyHomePage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.indigo,
+              Colors.indigo.shade600,
               Colors.indigo.shade900,
             ],
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(top: 32.0, left: 16, right: 16),
+          padding: const EdgeInsets.only(top: 32.0,left: 16,right: 16),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Row(
                   children: [
-                    IconButton(
-                      onPressed: _showSortDialog,
-                      icon: const Icon(Icons.sort,size: 32,),
+                    IconButton(onPressed:() {setState(() {
+                          _showSortDialog();
+                          _showArchivedTodos = false;
+                        });
+                      },
+                      icon: const Icon(Icons.sort,size: 32),
                       color: Colors.white.withOpacity(0.75),
                     ),
                     const Spacer(),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _isSearching = !_isSearching;
+                    IconButton(onPressed: () {setState(() {
+                          _isSearching = !_isSearching; // Toggle search state
+                          _showArchivedTodos = false;
                           if (!_isSearching) {
-                            _searchText = '';
-                          }
-                        });
+                            _searchText = ''; // Clear search text when exiting search mode
+                          }});
                       },
                       icon: const Icon(Icons.search,size: 32,),
                       color: Colors.white.withOpacity(0.75),
@@ -79,242 +80,129 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: TextField(
-                            autofocus: true,
+                          child: TextField(autofocus: true,
                             decoration: InputDecoration(
                               hintText: 'Search',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.all(8.0),
-                            ),
-                            onChanged: _handleSearch,
-                          ),
+                                borderSide: BorderSide.none,),
+                              contentPadding: const EdgeInsets.all(8.0),),
+                            onChanged: _handleSearch,),
                         ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
               const DateWidget(),
-              const SizedBox(
-                height: 20,
-              ),
-              const SizedBox(
-                height: 50,
-              ),
-              Row(
-                children: [
-                  Text(
-                    'your Todo Items',
-                    style: TextStyle(color: Colors.white.withOpacity(0.75)),
-                  ),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.task_alt,
-                    color: Colors.white.withOpacity(0.75),
-                    size: 16,
-                  )
-                ],
-              ),
-              _isSearching
-                  ? _buildSearchResults()
-                  : Expanded(
-                      child: FutureBuilder<List<Todo>>(
-                        future: _databaseHelper.getTodos(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
-                          if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          }
-
-                          final todos = snapshot.data ?? [];
-                          final sortedTodos = _sortTodos(todos);
-
-                          return ListView.builder(
-                            itemCount: sortedTodos.length,
-                            itemBuilder: (context, index) {
-                              final todo = sortedTodos[index];
-
-                              return Dismissible(
-                                key: Key(todo.id),
-                                background: Container(
-                                  margin: const EdgeInsets.all(8),
-                                  alignment: Alignment.centerLeft,
-                                  color: Colors.red.withOpacity(
-                                      0.75), // Swipe left for delete
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                secondaryBackground: Container(
-                                  margin: const EdgeInsets.all(8),
-                                  alignment: Alignment.centerRight,
-                                  color: Colors.green.withOpacity(
-                                      0.75), // Swipe right for archive
-                                  child: const Icon(
-                                    Icons.archive,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                direction: DismissDirection
-                                    .horizontal, // Allow horizontal swiping
-                                confirmDismiss: (direction) async {
-                                  if (direction ==
-                                      DismissDirection.startToEnd) {
-                                    // Swipe left for delete
-                                    return await showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text("Confirm"),
-                                          content: const Text(
-                                              "Are you sure you want to delete this todo?"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
-                                              child: const Text("CANCEL"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(true),
-                                              child: const Text("DELETE"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    // Swipe right for archive
-                                    return await showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text("Confirm"),
-                                          content: const Text(
-                                              "Are you sure you want to archive this todo?"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
-                                              child: const Text("CANCEL"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(true),
-                                              child: const Text("ARCHIVE"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  }
-                                },
-                                onDismissed: (direction) {
-                                  if (direction ==
-                                      DismissDirection.startToEnd) {
-                                    // Swipe left for delete
-                                    _deleteTodo(todo.id);
-                                  } else {
-                                    // Swipe right for archive
-                                    _archiveTodo(todo.id);
-                                  }
-                                },
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            TodoDescriptionPage(todo: todo),
+              const SizedBox(height: 40,),
+              Row(children: [
+                Text('your Todo Items', style: TextStyle(color: Colors.white.withOpacity(0.75)),),
+                const SizedBox(width: 5,),
+                Icon(Icons.task_alt, color: Colors.white.withOpacity(0.75), size: 16,)
+              ],),
+              _isSearching ? _buildSearchResults() :
+              Expanded(
+                child: FutureBuilder<List<Todo>>(
+                  future: _databaseHelper.getTodos(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    }
+                    final todos = snapshot.data ?? [];
+                    final sortedTodos = _sortTodos(todos); // Sort todos
+                    return ListView.builder(
+                      itemCount: sortedTodos.length,
+                      itemBuilder: (context, index) {
+                        final todo = sortedTodos[index];
+                        return Dismissible(
+                          key: Key(todo.id), // Unique key for each todo item
+                          background: Container(
+                            margin: const EdgeInsets.all(8), alignment: Alignment.centerLeft, color: Colors.red.withOpacity(0.75),
+                            child: const Icon(Icons.delete, color: Colors.white,),
+                          ),
+                          secondaryBackground: Container(
+                            margin: const EdgeInsets.all(8),
+                            alignment: Alignment.centerRight,
+                            color: Colors.green.withOpacity(0.75),
+                            child: const Icon(Icons.archive,
+                              color: Colors.white,),
+                          ),
+                          direction: DismissDirection.horizontal,
+                          confirmDismiss: (direction) async {
+                            if (direction ==
+                                DismissDirection.startToEnd) {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Confirm"),
+                                    content: const Text(
+                                        "Are you sure you want to delete this todo?"),
+                                    actions: <Widget>[
+                                      TextButton(onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text("CANCEL"),
                                       ),
-                                    );
-                                  },
-                                  child: FutureBuilder<SharedPreferences>(
-                                    future: _prefsFuture,
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return const CircularProgressIndicator();
-                                      }
-                                      final SharedPreferences prefs =
-                                          snapshot.data!;
-                                      final bool done =
-                                          prefs.getBool('todo_${todo.id}') ??
-                                              false;
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8),
-                                        child: Card(
-                                          color: Colors.white.withOpacity(0.6),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Checkbox(
-                                                checkColor: Colors.white,
-                                                activeColor: Colors.green,
-                                                splashRadius: 16.0,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            16)),
-                                                value: done,
-                                                onChanged: (isChecked) {
-                                                  _setDone(todo.id, isChecked);
-                                                },
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(todo.title,
-                                                  style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.75),
-                                                      fontSize: 20)),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
+                                      TextButton(onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text("DELETE"),),
+                                    ],
+                                  );
+                                },
                               );
+                            } else {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Confirm"),
+                                    content: const Text(
+                                        "Are you sure you want to archive this todo?"),
+                                    actions: <Widget>[
+                                      TextButton(onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text("CANCEL"),),
+                                      TextButton(onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text("ARCHIVE"),),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                          onDismissed: (direction) {
+                            if (direction == DismissDirection.startToEnd) {
+                              _deleteTodo(todo.id);
+                            } else {
+                              _archiveTodo(todo.id);
+                            }},
+                          child: InkWell(
+                            onTap: () {Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => TodoDescriptionPage(todo: todo),),);
                             },
-                          );
-                        },
-                      ),
-                    ),
+                            child: CheckableTodoItem(todo: todo, onChanged: _refreshTodos,),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: InkWell(
                   onTap: () {
                     setState(() {
                       _showArchivedTodos =
-                          !_showArchivedTodos; // Toggle visibility of archived todos
+                      !_showArchivedTodos; // Toggle visibility of archived todos
                     });
                   },
                   child: Row(
                     children: [
-                      Text('Archived Todos',
-                          style:
-                              TextStyle(color: Colors.white.withOpacity(0.75))),
-                      Icon(
-                        _showArchivedTodos
+                      Text('Archived Todos', style: TextStyle(color: Colors.white.withOpacity(0.75))),
+                      Icon(_showArchivedTodos
                             ? Icons.arrow_drop_up
                             : Icons.arrow_drop_down,
                         color: Colors.white.withOpacity(0.75),
@@ -323,7 +211,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              // Space to display archived todos
               if (_showArchivedTodos) ...[
                 // Show archived todos only if the toggle is enabled
                 AnimatedSwitcher(
@@ -343,36 +230,27 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                       return ListView(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        // Disable scrolling to ensure it doesn't interfere with the outer ListView
+                        physics: const NeverScrollableScrollPhysics(),
                         children: archivedTodos.map((todo) {
                           return Dismissible(
                             key: Key(todo.id),
                             background: Container(
                               margin: const EdgeInsets.all(8),
                               alignment: Alignment.centerLeft,
-                              color: Colors.red
-                                  .withOpacity(0.75), // Swipe left for delete
-                              child: const Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                              ),
+                              color: Colors.red.withOpacity(0.75),
+                              child: const Icon(Icons.delete,
+                                color: Colors.white,),
                             ),
                             secondaryBackground: Container(
                               margin: const EdgeInsets.all(8),
                               alignment: Alignment.centerRight,
-                              color: Colors.green
-                                  .withOpacity(0.75), // Swipe right for unarchive
-                              child: const Icon(
-                                Icons.unarchive,
-                                color: Colors.white,
-                              ),
+                              color: Colors.green.withOpacity(0.75),
+                              child: const Icon(Icons.unarchive,
+                                color: Colors.white,),
                             ),
-                            direction: DismissDirection
-                                .horizontal, // Allow horizontal swiping
+                            direction: DismissDirection.horizontal,
                             confirmDismiss: (direction) async {
                               if (direction == DismissDirection.startToEnd) {
-                                // Swipe left for delete
                                 return await showDialog(
                                   context: context,
                                   builder: (BuildContext context) {
@@ -381,16 +259,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                       content: const Text(
                                           "Are you sure you want to delete this todo?"),
                                       actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: const Text("CANCEL"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
-                                          child: const Text("DELETE"),
-                                        ),
+                                        TextButton(onPressed: () => Navigator.of(context).pop(false),
+                                          child: const Text("CANCEL"),),
+                                        TextButton(onPressed: () =>Navigator.of(context).pop(true),
+                                          child: const Text("DELETE"),),
                                       ],
                                     );
                                   },
@@ -441,9 +313,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 );
                               },
                               child: Padding(
-
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
+                                const EdgeInsets.symmetric(horizontal: 8),
                                 child: FutureBuilder<SharedPreferences>(
                                   future: _prefsFuture,
                                   builder: (context, snapshot) {
@@ -451,42 +322,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ConnectionState.waiting) {
                                       return const CircularProgressIndicator();
                                     }
-                                    final SharedPreferences prefs =
-                                    snapshot.data!;
-                                    final bool done =
-                                        prefs.getBool('todo_${todo.id}') ??
-                                            false;
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8),
-                                      child: Card(
-                                        color: Colors.white.withOpacity(0.6),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                          children: [
-                                            Checkbox(
-                                              checkColor: Colors.white,
-                                              activeColor: Colors.green,
-                                              splashRadius: 16.0,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(
-                                                      16)),
-                                              value: done,
-                                              onChanged: (isChecked) {
-                                                _setDone(todo.id, isChecked);
-                                              },
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(todo.title,
-                                                style: TextStyle(
-                                                    color: Colors.white
-                                                        .withOpacity(0.75),
-                                                    fontSize: 20)),
-                                          ],
-                                        ),
-                                      ),
+                                      child: CheckableTodoItem(todo: todo, onChanged: _refreshTodos,)
                                     );
                                   },
                                 ),
@@ -509,9 +348,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildSearchResults() {
     return Expanded(
       child: FutureBuilder<List<Todo>>(
-        future: _showArchivedTodos
-            ? _databaseHelper.getArchivedTodos()
-            : _databaseHelper.getTodos(),
+        future: _databaseHelper.getTodos(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();
@@ -519,133 +356,63 @@ class _MyHomePageState extends State<MyHomePage> {
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           }
-
           final todos = snapshot.data ?? [];
-          final sortedTodos = _sortTodos(todos);
-
+          final filteredTodos = todos.where((todo) =>
+          todo.title.toLowerCase().contains(_searchText.toLowerCase()) ||
+              (todo.description?.toLowerCase().contains(_searchText.toLowerCase()) ?? false)
+          ).toList();
           return ListView.builder(
-            itemCount: sortedTodos.length,
+            itemCount: filteredTodos.length,
             itemBuilder: (context, index) {
-              final todo = sortedTodos[index];
+              final todo = filteredTodos[index];
               return Dismissible(
-                key: Key(todo.id),
+                key: Key(todo.id), // Unique key for each todo item
                 background: Container(
                   margin: const EdgeInsets.all(8),
-                  alignment: Alignment.centerLeft,
-                  color: Colors.red.withOpacity(0.75), // Swipe left for delete
+                  alignment: Alignment.centerRight,
+                  color: Colors.red.withOpacity(0.75),
                   child: const Icon(
                     Icons.delete,
                     color: Colors.white,
                   ),
                 ),
-                secondaryBackground: Container(
-                  margin: const EdgeInsets.all(8),
-                  alignment: Alignment.centerRight,
-                  color: _showArchivedTodos
-                      ? Colors.blue.withOpacity(0.75)
-                      : Colors.green.withOpacity(
-                          0.75), // Swipe right for archive if showing archived todos, otherwise swipe right to add back to main todo list
-                  child: _showArchivedTodos
-                      ? const Icon(
-                          Icons.unarchive,
-                          color: Colors.white,
-                        )
-                      : const Icon(
-                          Icons.archive,
-                          color: Colors.white,
-                        ),
-                ),
-                direction:
-                    DismissDirection.horizontal, // Allow horizontal swiping
+                direction: DismissDirection.endToStart,
                 confirmDismiss: (direction) async {
-                  if (direction == DismissDirection.startToEnd) {
-                    // Swipe left for delete
-                    return await showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Confirm"),
-                          content: const Text(
-                              "Are you sure you want to delete this todo?"),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text("CANCEL"),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text("DELETE"),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  } else {
-                    // Swipe right for archive or add back to main todo list
-                    return true;
-                  }
+                  // Confirmation dialog to ensure the user wants to delete
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirm"),
+                        content: const Text("Are you sure you want to delete this todo?"),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text("CANCEL"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text("DELETE"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
                 onDismissed: (direction) {
-                  if (direction == DismissDirection.startToEnd) {
-                    // Swipe left for delete
-                    _deleteTodo(todo.id);
-                  } else {
-                    // Swipe right for archive or add back to main todo list
-                    if (_showArchivedTodos) {
-                      // If showing archived todos, add back to main todo list
-                      _addBackToTodos(todo.id);
-                    } else {
-                      // If not showing archived todos, archive the todo
-                      _archiveTodo(todo.id);
-                    }
-                  }
+                  // Remove the item from the data source
+                  _databaseHelper.deleteTodo(todo.id);
                 },
                 child: InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TodoDescriptionPage(todo: todo),
-                      ),
-                    );
+                        builder: (context) => TodoDescriptionPage(todo: todo),),);
                   },
-                  child: FutureBuilder<SharedPreferences>(
-                    future: _prefsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      }
-                      final SharedPreferences prefs = snapshot.data!;
-                      final bool done =
-                          prefs.getBool('todo_${todo.id}') ?? false;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Card(
-                          color: Colors.white.withOpacity(0.6),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Checkbox(
-                                checkColor: Colors.white,
-                                activeColor: Colors.green,
-                                splashRadius: 16.0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                                value: done,
-                                onChanged: (isChecked) {
-                                  _setDone(todo.id, isChecked);
-                                },
-                              ),
-                              const SizedBox(width: 6),
-                              Text(todo.title,
-                                  style: TextStyle(
-                                      color: Colors.white.withOpacity(0.75),
-                                      fontSize: 20)),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                  child: CheckableTodoItem(
+                    todo: todo,
+                    onChanged: _refreshTodos,
                   ),
                 ),
               );
@@ -656,38 +423,14 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _addBackToTodos(String todoId) async {
-    // Retrieve the todo item from the 'archived_todos' table
-    final todo = await _databaseHelper.getArchivedTodoById(todoId);
-
-    // Insert the todo item into the 'todos' table
-    await _databaseHelper.insertTodo(todo!);
-
-    // Delete the todo item from the 'archived_todos' table
-    await _databaseHelper.deleteArchivedTodo(todoId);
-
-    // Refresh the UI to reflect the changes
-    _refreshTodos();
-  }
-
-  void _setDone(String todoId, bool? isChecked) async {
-    if (isChecked != null) {
-      final SharedPreferences prefs = await _prefsFuture;
-      setState(() {
-        prefs.setBool('todo_$todoId', isChecked);
-      });
-    }
-  }
-
   Future<void> _addTodo() async {
     await showDialog(
       context: context,
       builder: (context) {
         TextEditingController textController = TextEditingController();
         TextEditingController descriptionController = TextEditingController();
-        File? selectedImage;
+        File? selectedImage; // Track selected image
         DateTime selectedDate = DateTime.now();
-
         return AlertDialog(
           title: const Text('Add Todo'),
           content: SingleChildScrollView(
@@ -696,14 +439,12 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 TextField(
                   controller: textController,
-                  decoration:
-                      const InputDecoration(hintText: 'Enter your todo'),
+                  decoration: const InputDecoration(hintText: 'Enter your todo'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
-                      hintText: 'Enter description (optional)'),
+                  decoration: const InputDecoration(hintText: 'Enter description (optional)'),
                 ),
                 const SizedBox(height: 8),
                 ImageInput(
@@ -730,9 +471,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.calendar_month),
-                      SizedBox(
-                        width: 5,
-                      ),
+                      SizedBox(width: 5,),
                       Text('Completion Date'),
                     ],
                   ),
@@ -751,16 +490,13 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
                   await _databaseHelper.insertTodo(Todo(
-                    id: '',
+                    id: '', // This will be ignored by SQLite
                     title: textController.text,
-                    description: descriptionController.text.isNotEmpty
-                        ? descriptionController.text
-                        : null,
+                    description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
                     createdDate: DateTime.now(),
                     targetCompletionDate: selectedDate,
                     done: false,
-                    imagePath:
-                        selectedImage != null ? selectedImage!.path : null,
+                    imagePath: selectedImage != null ? selectedImage!.path : null, // Save image path if available
                   ));
                   _refreshTodos();
                   Navigator.of(context).pop();
@@ -814,8 +550,7 @@ class _MyHomePageState extends State<MyHomePage> {
         todos.sort((a, b) => a.title.compareTo(b.title));
         break;
       case 'Date':
-        todos.sort((a, b) =>
-            a.targetCompletionDate!.compareTo(b.targetCompletionDate!));
+        todos.sort((a, b) => a.targetCompletionDate!.compareTo(b.targetCompletionDate!));
         break;
       default:
         break;
