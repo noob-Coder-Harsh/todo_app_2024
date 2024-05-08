@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:todo_app_project/todo/todo_description_page.dart';
 import 'package:todo_app_project/todo/todo_item.dart';
 import 'package:todo_app_project/widgets/custom_alert.dart';
@@ -19,13 +20,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   final _databaseHelper = DatabaseHelper();
+  late Future<SharedPreferences> _prefsFuture;
+  final List<Todo> _selectedTodos = [];
   bool _isSearching = false;
   String _sortBy = 'None';
   String _searchText = '';
-  late Future<SharedPreferences> _prefsFuture;
   bool _showArchivedTodos = false;
   bool _isMultiSelecting = false;
-  final List<Todo> _selectedTodos = [];
+
 
   @override
   void initState() {
@@ -39,9 +41,9 @@ class _MyHomePageState extends State<MyHomePage> {
       onWillPop: () async {
         if (_isMultiSelecting) {
           _resetSelectionState();
-          return false; // Prevent default behavior (exiting the app)
+          return false;
         }
-        return true; // Allow default behavior (exit the app)
+        return true;
       },
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
@@ -54,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.indigo.shade600,
+                Colors.grey.shade900,
                 Colors.indigo.shade900,
               ],
             ),
@@ -180,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 builder: (context) => TodoDescriptionPage(todo: todo),),);
                               },
                               child: Card(
-                                color: Colors.white.withOpacity(0.6),
+                                color: Colors.white54,
                                 child: Row(
                                   children: [
                                     if(_isMultiSelecting)
@@ -202,7 +204,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                     CheckableTodoItem(todo: todo, onChanged: _refreshTodos,),
                                     const Spacer(),
-                                    IconButton(onPressed: (){_updateTodo(todo);}, icon: Icon(Icons.edit,color: Colors.white.withOpacity(0.4),size: 18,))
+                                    IconButton(onPressed: (){_updateTodo(todo);},
+                                        icon: const Icon(Icons.edit,
+                                          color: Colors.white,size: 18,)
+                                    )
                                   ],
                                 ),
                               ),
@@ -411,19 +416,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _addTodo() async {
     TextEditingController textController = TextEditingController();
     TextEditingController descriptionController = TextEditingController();
-    File? selectedImage; // Track selected image
+    File? selectedImage;
     DateTime selectedDate = DateTime.now();
 
     await showModalBottomSheet(
       backgroundColor: Colors.white.withOpacity(0.9),
       context: context,
-      isScrollControlled: true, // Ensures that the modal bottom sheet covers the full screen
+      isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.75, // Set the height to cover 70% of the screen
+          heightFactor: 0.75,
           child: SingleChildScrollView(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom, // Adjusts padding when the keyboard is open
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -483,7 +488,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         onPressed: () async {
                           if (textController.text.isNotEmpty) {
                             await _databaseHelper.insertTodo(Todo(
-                              id: '', // This will be ignored by SQLite
+                              id: '', //for ID using UUID
                               title: textController.text,
                               description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
                               createdDate: DateTime.now(),
@@ -509,77 +514,98 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _updateTodo(Todo todo) async {
+    TextEditingController textController = TextEditingController(text: todo.title);
+    TextEditingController descriptionController = TextEditingController(text: todo.description ?? '');
+    File? selectedImage;
+    DateTime? selectedDate = todo.targetCompletionDate;
+
     await showModalBottomSheet(
+      backgroundColor: Colors.white.withOpacity(0.9),
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        TextEditingController textController = TextEditingController();
-        TextEditingController descriptionController = TextEditingController();
-
-        // Initialize text fields with existing todo details
-        textController.text = todo.title;
-        descriptionController.text = todo.description ?? '';
-
         return FractionallySizedBox(
-          heightFactor: 0.7, // Cover 70% of the screen's height
+          heightFactor: 0.75,
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
                     controller: textController,
                     decoration: const InputDecoration(hintText: 'Enter your todo'),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
+                  const SizedBox(height: 8),
+                  TextField(
                     controller: descriptionController,
                     decoration: const InputDecoration(hintText: 'Enter description (optional)'),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        // Dispose controllers when dialog is dismissed
-                        textController.dispose();
-                        descriptionController.dispose();
-                      },
-                      child: const Text('Cancel'),
+                  const SizedBox(height: 8),
+                  ImageInput(
+                    onPickImage: (image) {
+                      selectedImage = image;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2101),
+                      );
+                      if (pickedDate != null && pickedDate != selectedDate) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.calendar_month),
+                        SizedBox(width: 5),
+                        Text('Completion Date'),
+                      ],
                     ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (textController.text.isNotEmpty) {
-                          Todo updatedTodo = Todo(
-                            id: todo.id,
-                            title: textController.text,
-                            description: descriptionController.text,
-                            createdDate: todo.createdDate,
-                            targetCompletionDate: todo.targetCompletionDate,
-                            done: todo.done,
-                            imagePath: todo.imagePath,
-                          );
-
-                          await _databaseHelper.updateTodo(updatedTodo);
-                          _refreshTodos();
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () {
                           Navigator.of(context).pop();
-                          // Dispose controllers after update operation is complete
-                          textController.dispose();
-                          descriptionController.dispose();
-                        }
-                      },
-                      child: const Text('Update'),
-                    ),
-                  ],
-                ),
-              ],
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (textController.text.isNotEmpty) {
+                            await _databaseHelper.updateTodo(Todo(
+                              id: todo.id,
+                              title: textController.text,
+                              description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
+                              createdDate: todo.createdDate,
+                              targetCompletionDate: selectedDate,
+                              done: todo.done,
+                              imagePath: selectedImage != null ? selectedImage!.path : null,
+                            ));
+                            _refreshTodos();
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text('Update'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

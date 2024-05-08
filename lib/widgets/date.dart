@@ -15,8 +15,8 @@ class DateWidget extends StatelessWidget {
     return Center(
       child: ThreeDText(
         text: formattedDate,
-        textStyle: TextStyle(fontSize: 32,
-          color: Colors.white.withOpacity(0.75),
+        textStyle: const TextStyle(fontSize: 32,
+          color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
         depth: 5,

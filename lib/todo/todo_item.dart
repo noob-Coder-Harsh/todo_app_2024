@@ -26,16 +26,6 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
     _prefsFuture = SharedPreferences.getInstance();
   }
 
-  void _setDone(bool? isChecked) async {
-    if (isChecked != null) {
-      final SharedPreferences prefs = await _prefsFuture;
-      setState(() {
-        widget.todo.done = isChecked;
-      });
-      await prefs.setBool('todo_${widget.todo.id}', isChecked);
-      widget.onChanged();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +65,17 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
         );
       },
     );
+  }
+
+  void _setDone(bool? isChecked) async {
+    if (isChecked != null) {
+      final SharedPreferences prefs = await _prefsFuture;
+      setState(() {
+        widget.todo.done = isChecked;
+      });
+      await prefs.setBool('todo_${widget.todo.id}', isChecked);
+      widget.onChanged();
+    }
   }
 }
 

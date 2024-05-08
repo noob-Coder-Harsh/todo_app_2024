@@ -9,7 +9,7 @@ class TodoDescriptionPage extends StatefulWidget {
   const TodoDescriptionPage({Key? key, required this.todo}) : super(key: key);
 
   @override
-  _TodoDescriptionPageState createState() => _TodoDescriptionPageState();
+  State<TodoDescriptionPage> createState() => _TodoDescriptionPageState();
 }
 
 class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
@@ -32,80 +32,106 @@ class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade800,
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.grey.shade900,
         title: Text(
           widget.todo.title,
-          style: TextStyle(color: Colors.white.withOpacity(0.75)),
+          style: const TextStyle(color: Colors.white),
         ),
+        elevation: 5,
+        shadowColor: Colors.white,
       ),
       body: GestureDetector(
         onTap: () {
           _descriptionFocusNode.unfocus();
         },
-        child: SingleChildScrollView(
-          child: Container(
-            height: 730,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blue.shade800,
-                  Colors.indigo.shade900,
-                ],
-              ),
+        child: Container(
+          height: size.height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.grey.shade900,
+                Colors.indigo.shade900,
+              ],
             ),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildDateTimeColumn(
-                      title: 'Created at',
-                      date: widget.todo.createdDate,
-                    ),
-                    _buildDateTimeColumn(
-                      title: 'Targeted Completion',
-                      date: widget.todo.targetCompletionDate!,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    border: Border.all(width: 10, color: Colors.white.withOpacity(0.75)),
-                  ),
-                  width: double.infinity,
-                  height: 200,
-                  margin: EdgeInsets.symmetric(horizontal: 32),
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    readOnly: true,
-                    controller: _descriptionController,
-                    focusNode: _descriptionFocusNode,
-                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'No description available',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                    ),
-                    expands: false,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (widget.todo.imagePath != null && File(widget.todo.imagePath!).existsSync())
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(width: 10, color: Colors.white.withOpacity(0.75)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [BoxShadow(
+                            color: Colors.white,offset: Offset(0,2),
+                            blurRadius: 5
+                        )]
                     ),
-                    margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                    child: Image.file(File(widget.todo.imagePath!)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildDateTimeColumn(
+                          title: 'Created at',
+                          date: widget.todo.createdDate,
+                        ),
+                        _buildDateTimeColumn(
+                          title: 'Targeted Completion',
+                          date: widget.todo.targetCompletionDate!,
+                        ),
+                      ],
+                    ),
                   ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [BoxShadow(
+                        color: Colors.white,offset: Offset(0,2),
+                        blurRadius: 5
+                      )]
+                    ),
+                    width: double.infinity,
+                    height: size.height*0.25,
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      readOnly: true,
+                      controller: _descriptionController,
+                      focusNode: _descriptionFocusNode,
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
+                      decoration: const InputDecoration(
+                        hintText: 'No description available',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none
+                      ),
+                      expands: false,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (widget.todo.imagePath != null && File(widget.todo.imagePath!).existsSync())
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(width: 5,color: Colors.white),
+                          boxShadow: const [BoxShadow(
+                              color: Colors.white,offset: Offset(0,2),
+                              blurRadius: 5
+                          )]
+                      ),
+                      child: Image.file(File(widget.todo.imagePath!)),
+                    ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
@@ -119,12 +145,14 @@ class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
       children: [
         Text(
           title,
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 5),
         Text(
           DateFormat('dd/MM/yyyy').format(date),
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontStyle: FontStyle.italic),
+          style: TextStyle(color: Colors.grey.shade700,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.bold),
         ),
       ],
     );

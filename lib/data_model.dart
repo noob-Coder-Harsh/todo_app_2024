@@ -45,5 +45,4 @@ class Todo {
       isSelected: map['isSelected'] == 1, // Assign isSelected from map
     );
   }
-
 }
