@@ -47,10 +47,38 @@ class _CheckableTodoItemState extends State<CheckableTodoItem> {
                 activeColor: Colors.green,
                 splashRadius: 16.0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                value: done, // Use done property
-                onChanged: _setDone,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                value: done,
+                onChanged: (newValue) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Update Task"),
+                        content: const Text("Do you want to update this task"),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text("No"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                              _setDone(false); // Mark task as not done
+                            },
+                          ),
+                          TextButton(
+                            child: const Text("Yes"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                              _setDone(true); // Mark task as done
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
+
               const SizedBox(width: 6),
               Text(
                 widget.todo.title,

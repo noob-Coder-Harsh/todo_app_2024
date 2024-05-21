@@ -80,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       const Spacer(),
                       if(_isMultiSelecting)
                       IconButton(onPressed: (){_deleteSelectedTodos();},
-                          icon: const Icon(Icons.delete)),
+                          icon: const Icon(Icons.delete,color: Colors.white,)),
                       IconButton(onPressed: () {setState(() {
                         _isSearching = !_isSearching; // Toggle search state
                         _showArchivedTodos = false;
@@ -437,7 +437,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   TextField(
                     controller: textController,
-                    decoration: const InputDecoration(hintText: 'Enter your todo'),
+                    decoration: const InputDecoration(hintText: 'Enter your todo title'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -494,7 +494,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               createdDate: DateTime.now(),
                               targetCompletionDate: selectedDate,
                               done: false,
-                              imagePath: selectedImage != null ? selectedImage!.path : null, // Save image path if available
+                              imagePath: selectedImage?.path, // Save image path if available
                             ));
                             _refreshTodos();
                             Navigator.of(context).pop();
@@ -594,7 +594,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               createdDate: todo.createdDate,
                               targetCompletionDate: selectedDate,
                               done: todo.done,
-                              imagePath: selectedImage != null ? selectedImage!.path : null,
+                              imagePath: selectedImage?.path,
                             ));
                             _refreshTodos();
                             Navigator.of(context).pop();
@@ -622,13 +622,18 @@ class _MyHomePageState extends State<MyHomePage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(title: const Text('Name'),
-                onTap: () {setState(() {_sortBy = 'Name';});
+              ListTile(title: const Text('By Name'),
+                onTap: () {setState(() {_sortBy = 'By Name';});
                 Navigator.of(context).pop();
                 },
               ),
-              ListTile(title: const Text('Date'),
-                onTap: () { setState(() {_sortBy = 'Date';});
+              ListTile(title: const Text('By Date'),
+                onTap: () { setState(() {_sortBy = 'By Date';});
+                Navigator.of(context).pop();
+                },
+              ),
+              ListTile(title: const Text('By Done'),
+                onTap: () { setState(() {_sortBy = 'By Done';});
                 Navigator.of(context).pop();
                 },
               ),
@@ -641,9 +646,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Todo> _sortTodos(List<Todo> todos) {
     switch (_sortBy) {
-      case 'Name': todos.sort((a, b) => a.title.compareTo(b.title));
+      case 'By Name': todos.sort((a, b) => a.title.compareTo(b.title));
       break;
-      case 'Date': todos.sort((a, b) => a.targetCompletionDate!.compareTo(b.targetCompletionDate!));
+      case 'By Date': todos.sort((a, b) => a.targetCompletionDate!.compareTo(b.targetCompletionDate!));
+      break;
+      case 'By Done': todos.sort((a, b) => a.done ? -1 : 1);
       break;
       default:
         break;
