@@ -219,7 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(vertical: 25.0),
                   child: InkWell(
                     onTap: () {
                       setState(() {
@@ -254,7 +254,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                         final archivedTodos = snapshot.data ?? [];
                         if (archivedTodos.isEmpty) {
-                          return const Text('No archived todos.');
+                          return const Text('No archived todos',
+                            style: TextStyle(color: Colors.white70,fontWeight: FontWeight.bold,fontSize: 18),);
                         }
                         return ListView(
                           shrinkWrap: true,
@@ -339,6 +340,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                     ),
                   ),
+                  SizedBox(height: 50,)
                 ],
               ],
             ),

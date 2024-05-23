@@ -106,11 +106,11 @@ class _TodoDescriptionPageState extends State<TodoDescriptionPage> {
                       readOnly: true,
                       controller: _descriptionController,
                       focusNode: _descriptionFocusNode,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
+                      style: TextStyle(color: Colors.grey.shade900, fontSize: 16),
                       decoration: const InputDecoration(
                         hintText: 'No description available',
                         hintStyle: TextStyle(color: Colors.grey),
-                        border: InputBorder.none
+                        border: InputBorder.none,
                       ),
                       expands: false,
                     ),
