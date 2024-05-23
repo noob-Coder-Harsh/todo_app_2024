@@ -5,11 +5,25 @@
 ## Screenshots
 
 <table>
+    <thead>
+        <tr>
+            <td>Homepage</td>
+<td>Sort Feature</td>
+<td>Search Feature</td>
+        </tr>
+    </thead>
   <tr>
     <td><img src="screenshots/homepage.png" alt="Screen1" width="200"/></td>
     <td><img src="screenshots/sort.png" alt="Screen2" width="200"/></td>
     <td><img src="screenshots/search.png" alt="Screen2" width="200"/></td>
   </tr>
+<thead>
+        <tr>
+            <td>Description</td>
+<td>Delete</td>
+<td>Archive</td>
+        </tr>
+    </thead>
   <tr>
     <td><img src="screenshots/description.png" alt="Screen2" width="200"/></td>
     <td><img src="screenshots/ss1.jpg" alt="Screen2" width="200"/></td>
