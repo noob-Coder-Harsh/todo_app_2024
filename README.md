@@ -1,10 +1,17 @@
 # Todo App
 
-![Build Status](https://github.com/your-username/your-repo-name/actions/workflows/ci.yml/badge.svg)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 
 ## Screenshots
 
 <table>
+      <thead>
+        <tr>
+            <td>Homepage</td>
+<td>Homepage</td>
+<td>Homepage</td>
+        </tr>
+    </thead>
   <tr>
     <td><img src="screenshots/homepage.png" alt="Screen1" width="200"/></td>
     <td><img src="screenshots/sort.png" alt="Screen2" width="200"/></td>
