@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:todo_app_project/todo/todo_description_page.dart';
 import 'package:todo_app_project/todo/todo_item.dart';
 import 'package:todo_app_project/widgets/custom_alert.dart';
+import 'package:todo_app_project/widgets/date_list.dart';
 import 'package:todo_app_project/widgets/image_input.dart';
 import 'data_model.dart';
 import 'database_helper.dart';
@@ -27,6 +29,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _searchText = '';
   bool _showArchivedTodos = false;
   bool _isMultiSelecting = false;
+  bool _isCompletionDatePicked = false;
 
 
   @override
@@ -420,6 +423,7 @@ class _MyHomePageState extends State<MyHomePage> {
     TextEditingController descriptionController = TextEditingController();
     File? selectedImage;
     DateTime selectedDate = DateTime.now();
+    String selectedDateText = 'Completion Date';
 
     await showModalBottomSheet(
       backgroundColor: Colors.white.withOpacity(0.9),
@@ -428,87 +432,94 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.75,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: textController,
-                    decoration: const InputDecoration(hintText: 'Enter your todo title'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(hintText: 'Enter description (optional)'),
-                  ),
-                  const SizedBox(height: 8),
-                  ImageInput(
-                    onPickImage: (image) {
-                      selectedImage = image;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2101),
-                      );
-                      if (pickedDate != null && pickedDate != selectedDate) {
-                        setState(() {
-                          selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.calendar_month),
-                        SizedBox(width: 5),
-                        Text('Completion Date'),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Cancel'),
+                      TextField(
+                        controller: textController,
+                        decoration: const InputDecoration(hintText: 'Enter your todo title'),
                       ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: descriptionController,
+                        decoration: const InputDecoration(hintText: 'Enter description (optional)'),
+                      ),
+                      const SizedBox(height: 8),
+                      ImageInput(
+                        onPickImage: (image) {
+                          setModalState(() {
+                            selectedImage = image;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () async {
-                          if (textController.text.isNotEmpty) {
-                            await _databaseHelper.insertTodo(Todo(
-                              id: '', //for ID using UUID
-                              title: textController.text,
-                              description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
-                              createdDate: DateTime.now(),
-                              targetCompletionDate: selectedDate,
-                              done: false,
-                              imagePath: selectedImage?.path, // Save image path if available
-                            ));
-                            _refreshTodos();
-                            Navigator.of(context).pop();
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2101),
+                          );
+                          if (pickedDate != null && pickedDate != selectedDate) {
+                            setModalState(() {
+                              selectedDate = pickedDate;
+                              selectedDateText = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                            });
                           }
                         },
-                        child: const Text('Add'),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.calendar_month),
+                            SizedBox(width: 5),
+                            Text(selectedDateText),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              if (textController.text.isNotEmpty) {
+                                await _databaseHelper.insertTodo(Todo(
+                                  id: '', // for ID using UUID
+                                  title: textController.text,
+                                  description: descriptionController.text.isNotEmpty ? descriptionController.text : null,
+                                  createdDate: DateTime.now(),
+                                  targetCompletionDate: selectedDate,
+                                  done: false,
+                                  imagePath: selectedImage?.path, // Save image path if available
+                                ));
+                                _refreshTodos();
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: const Text('Add'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         );
       },
